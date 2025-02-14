@@ -30,3 +30,5 @@ Role.init(
         timestamps: true,
     }
 )
+
+export default Role;

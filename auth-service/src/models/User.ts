@@ -1,22 +1,27 @@
-import { DataTypes, Model } from "sequelize";
+import { DataTypes, Model, Association, BelongsToGetAssociationMixin } from "sequelize";
 import { sequelize } from "../config/database";
+import Role from "./Role";
 
 export interface IUser {
-    id: number;
+    id?: number;
     name: string;
     email: string;
     password: string;
     roleId: number;
 }
 
-class User extends Model {
+class User extends Model<IUser> implements IUser {
     public id!: number;
     public name!: string;
     public email!: string;
     public password!: string;
-    public roleId!: string;
-    public createdAt!: Date;
-    public updatedAt!: Date;
+    public roleId!: number;
+    // Role Association
+    public role?: Role;
+    public getRole!: BelongsToGetAssociationMixin<Role>;
+    public static associations: {
+        role: Association<User, Role>;
+    };
 }
 
 User.init(
@@ -42,14 +47,23 @@ User.init(
             type: DataTypes.STRING,
             allowNull: false,
         },
-        role: {
-            type: DataTypes.ENUM('admin', 'user'),
-            defaultValue: 'user'
+        roleId: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: Role,
+                key: 'id'
+            },
+            allowNull: false,
         },
     },
     {
         sequelize,
-        tableName: 'auth_users',
+        tableName: "auth_users",
         timestamps: true,
     }
-)
+);
+
+// Relationship
+User.belongsTo(Role, { foreignKey: "roleId", targetKey: "id", as: "role" });
+
+export default User;
