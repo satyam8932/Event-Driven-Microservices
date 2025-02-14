@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  auth-service:
+    build: .
+    ports:
+      - "5001:5001"
+    depends_on:
+      - auth-db
+    environment:
+      DB_NAME: auth_db
+      DB_USER: auth
+      DB_PASS: 123
+      DB_HOST: auth-db
+      DB_PORT: 5432
+      JWT_SECRET: "supersecret"
+    networks:
+      - backend
+
+  auth-db:
+    image: postgres:16
+    restart: on-failure
+    environment:
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: auth_db
+    ports:
+      - "5433:5432"
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
