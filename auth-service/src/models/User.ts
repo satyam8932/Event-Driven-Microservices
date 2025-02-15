@@ -1,6 +1,6 @@
 import { DataTypes, Model, Association, BelongsToGetAssociationMixin } from "sequelize";
 import { sequelize } from "../config/database";
-import Role from "./Role";
+import Role, { IRole } from "./Role";
 
 export interface IUser {
     id?: number;
@@ -8,18 +8,18 @@ export interface IUser {
     email: string;
     password: string;
     roleId: number;
+    role?: IRole;
 }
 
 class User extends Model<IUser> implements IUser {
-    public id!: number;
-    public name!: string;
-    public email!: string;
-    public password!: string;
-    public roleId!: number;
-    // Role Association
-    public role?: Role;
-    public getRole!: BelongsToGetAssociationMixin<Role>;
-    public static associations: {
+    declare id: number;
+    declare name: string;
+    declare email: string;
+    declare password: string;
+    declare roleId: number;
+    declare role?: Role;
+    declare getRole: BelongsToGetAssociationMixin<IRole>;
+    declare static associations: {
         role: Association<User, Role>;
     };
 }
@@ -63,7 +63,6 @@ User.init(
     }
 );
 
-// Relationship
 User.belongsTo(Role, { foreignKey: "roleId", targetKey: "id", as: "role" });
 
 export default User;

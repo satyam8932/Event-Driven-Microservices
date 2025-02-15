@@ -11,6 +11,7 @@ services:
       DB_PASS: 123
       DB_HOST: auth-db
       DB_PORT: 5432
+      NODE_ENV: "development"
       JWT_SECRET: "supersecret"
     networks:
       - auth_network
@@ -23,7 +24,7 @@ services:
       POSTGRES_PASSWORD: 123
       POSTGRES_DB: auth_db
     ports:
-      - "5433:5432"
+      - "5432:5432"
     networks:
       - auth_network
 

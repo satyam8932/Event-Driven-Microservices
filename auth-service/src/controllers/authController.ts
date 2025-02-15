@@ -15,49 +15,78 @@ export interface LoginRequest extends Request {
 }
 
 /**
- * SigUp Controller
+ * Register User Controller
  * @param SignUpRequest
  */
-export const signUp = async (req: SignUpRequest, res: Response) => {
+export const registerUser = async (req: SignUpRequest, res: Response): Promise<void> => {
     try {
         const { name, email, password, roleName } = req.body;
 
         const existingUser = await User.findOne({ where: { email } });
-        if (existingUser) return res.status(400).json({ message: "User already exists."});
+        if (existingUser) {
+            res.status(400).json({ message: "User already exists." });
+            return;
+        }
 
         const role = await Role.findOne({ where: { name: roleName } });
-        if (!role) return res.status(400).json({ message: "Invalid role." });
+        if (!role) {
+            res.status(400).json({ message: "Invalid role type." });
+            return;
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await User.create({ name, email, password: hashedPassword, roleId: role.id });
-        
-        if(!newUser) return res.status(500).json({ message: "Failed to create user." });
-        res.status(201).json({ message: "User registered successfully." });
+        const newUserRole = await User.findOne({ where: { id: newUser.id }, include: [{ model: Role, as: 'role' }] });
+
+        if (!newUser) {
+            res.status(500).json({ message: "Failed to create user." });
+            return;
+        }
+        res.status(201).json({ message: "User registered successfully.", id: newUser.id, email: newUser.email, role: newUserRole?.role?.name });
+        return;
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal Server Error." });
+        return;
     }
 }
 /**
- * LogIn Controller
+ * LogIn User Controller
  * @param LoginRequest
  */
-export const logIn = async (req: LoginRequest, res: Response) => {
+export const loginUser = async (req: LoginRequest, res: Response): Promise<void> => {
     try {
         const { email, password } = req.body;
 
-        const user = await User.findOne({ where: { email } });
-        if (!user) return res.status(400).json({ message: "Invalid email or password." });
+        const user = await User.findOne({ where: { email }, include: [{ model: Role, as: "role" }] });
+        if (!user) {
+            res.status(400).json({ message: "Invalid email or password." });
+            return;
+        }
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: "Invalid email or password." });
+        if (!isMatch) {
+            res.status(400).json({ message: "Invalid email or password." });
+            return;
+        }
 
-        if (!user.role) return res.status(400).json({ message: "User role not found." });
+        if (!user?.role) {
+            res.status(400).json({ message: "User role not found." });
+            return;
+        }
 
         const token = jwt.sign({ id: user.id, name: user.name, email: user.email, role: user.role.name }, JWT_SECRET, { expiresIn: '6h' });
-        res.status(201).json({ message: "Logged in successfully.", token });
+
+        if (!token) {
+            res.status(500).json({ message: "Failed to generate token." });
+            return;
+        }
+
+        res.status(201).json({ message: "Logged in successfully.", token, id: user.id, email: user.email, role: user.role.name });
+        return;
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal Server Error." });
+        return;
     }
 }

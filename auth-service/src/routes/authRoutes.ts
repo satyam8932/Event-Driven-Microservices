@@ -1,19 +1,45 @@
-import { Request, Router } from "express";
-import { authenticateUser } from "../middleware/authMiddleware";
-import { authorizeRole } from "../middleware/authMiddleware";
+import { Request, Response, Router } from "express";
+import { authenticateUser, authorizeRole } from "../middleware/authMiddleware";
+import { loginUser, registerUser } from "../controllers/authController";
+import { asyncHandler } from "../middleware/asyncHandler";
 
 const router = Router();
 
-router.get("/admin-dashboard", authenticateUser, authorizeRole(["admin"]), (req, res) => {
-  res.json({ message: "Welcome, Admin!" });
-});
+const sendResponse = (res: Response, status: number, success: boolean, message: string, data?: any) => {
+  return res.status(status).json({ success, message, data });
+};
 
-router.get("/manager-dashboard", authenticateUser, authorizeRole(["manager", "admin"]), (req, res) => {
-  res.json({ message: "Welcome, Manager or Admin!" });
-});
+// Admin Dashboard Route
+router.get(
+  "/admin-dashboard",
+  authenticateUser,
+  authorizeRole(["admin"]),
+  asyncHandler(async (req: Request, res: Response) => {
+    sendResponse(res, 200, true, "Welcome, Admin!");
+  })
+);
 
-router.get("/user-profile", authenticateUser, (req: Request, res) => {
-  res.json({ message: "Welcome, authenticated user!" });
-});
+// Manager Dashboard Route
+router.get(
+  "/manager-dashboard",
+  authenticateUser,
+  authorizeRole(["manager", "admin"]),
+  asyncHandler(async (req: Request, res: Response) => {
+    sendResponse(res, 200, true, "Welcome, Manager or Admin!");
+  })
+);
+
+// User Dashboard Route
+router.get(
+  "/user-dashboard",
+  authenticateUser,
+  asyncHandler(async (req: Request, res: Response) => {
+    sendResponse(res, 200, true, "Welcome, authenticated user!");
+  })
+);
+
+// Authentication Routes
+router.post("/register", asyncHandler(registerUser));
+router.post("/login", asyncHandler(loginUser));
 
 export default router;

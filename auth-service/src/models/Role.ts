@@ -7,8 +7,8 @@ export interface IRole {
 }
 
 class Role extends Model<IRole> implements IRole {
-    public id!: number;
-    public name!: string;
+    declare id: number;
+    declare name: string;
 }
 
 Role.init(
